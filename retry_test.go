@@ -13,7 +13,12 @@ func TestDoFunc(t *testing.T) {
 	err := DoFunc(2, func() error {
 		count++
 		return errors.New("simulation error")
-	}, time.Millisecond)
+	}, func(i int) time.Duration {
+		if i != 1 {
+			t.Error("Number of sleep wrong", i)
+		}
+		return time.Millisecond
+	})
 
 	if count != 2 {
 		t.Error("Number of retries wrong", count)
@@ -37,7 +42,9 @@ func ExampleDoFunc() {
 		}
 		count++
 		return errors.New("not allowed")
-	}, time.Second*1)
+	}, func(i int) time.Duration {
+		return time.Millisecond * time.Duration(i)
+	})
 
 	if err != nil {
 		log.Fatalln(err.Error())
@@ -62,7 +69,9 @@ func (t *tryTest) Count() int {
 
 func TestDo(t *testing.T) {
 	tt := &tryTest{}
-	err := Do(2, tt, time.Millisecond)
+	err := Do(2, tt, func(i int) time.Duration {
+		return time.Millisecond * time.Duration(i)
+	})
 
 	if v := tt.Count(); v != 2 {
 		t.Error("Number of retries wrong", v)

@@ -37,7 +37,7 @@ func main() {
 		}
 		count++
 		return errors.New("not allowed")
-	}, time.Second*1)
+	})
 
 	if err != nil {
 		log.Fatalln(err.Error())

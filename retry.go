@@ -14,6 +14,9 @@ type (
 	// Func try to execute the function
 	Func func() error
 
+	// Sleep sleep callback function
+	Sleep func(i int) time.Duration
+
 	// Trier try to execute the interface
 	Trier interface {
 		Try() error
@@ -22,7 +25,13 @@ type (
 
 // DoFunc try to execute a function,
 // specify the number of attempts, and the execution interval
-func DoFunc(retries int, fn Func, sleeps ...time.Duration) error {
+func DoFunc(retries int, fn Func, sleeps ...Sleep) error {
+	if retries <= 0 {
+		return nil
+	}
+
+	total := retries
+
 LBBEGIN:
 
 	if err := fn(); err != nil {
@@ -31,8 +40,10 @@ LBBEGIN:
 			return ErrMaxRetries
 		}
 
-		if len(sleeps) > 0 && sleeps[0] > 0 {
-			time.Sleep(sleeps[0])
+		if len(sleeps) > 0 {
+			if d := sleeps[0](total - retries); d > 0 {
+				time.Sleep(d)
+			}
 		}
 
 		goto LBBEGIN
@@ -43,7 +54,13 @@ LBBEGIN:
 
 // Do try to execute the interface,
 // specify the number of attempts, and the execution interval
-func Do(retries int, trier Trier, sleeps ...time.Duration) error {
+func Do(retries int, trier Trier, sleeps ...Sleep) error {
+	if retries <= 0 {
+		return nil
+	}
+
+	total := retries
+
 LBBEGIN:
 
 	if err := trier.Try(); err != nil {
@@ -52,8 +69,10 @@ LBBEGIN:
 			return ErrMaxRetries
 		}
 
-		if len(sleeps) > 0 && sleeps[0] > 0 {
-			time.Sleep(sleeps[0])
+		if len(sleeps) > 0 {
+			if d := sleeps[0](total - retries); d > 0 {
+				time.Sleep(d)
+			}
 		}
 
 		goto LBBEGIN
